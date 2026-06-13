@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="My Calendar" />
+  <title>My Calendar</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <button id="prevBtn" class="nav-btn">＜</button>
+      <h1 id="monthTitle"></h1>
+      <button id="nextBtn" class="nav-btn">＞</button>
+    </header>
+
+    <section class="calendar" id="calendar"></section>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="selectedDateTitle"></h2>
+        <button id="closeBtn" class="modal-close">×</button>
+      </div>
+
+      <div id="eventList" class="event-list"></div>
+
+      <div class="form">
+        <label for="eventTime">時間</label>
+        <input id="eventTime" type="time" />
+
+        <label for="eventInput">予定</label>
+        <input id="eventInput" type="text" placeholder="例：病院、バイト、買い物" />
+
+        <button id="addEventBtn" class="add-btn">予定を追加</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

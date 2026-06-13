@@ -1,0 +1,279 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f2f2f7;
+  color: #1c1c1e;
+}
+
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 18px 14px 28px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 6px 2px;
+}
+
+.header h1 {
+  font-size: 24px;
+  margin: 0;
+  font-weight: 700;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.nav-btn {
+  border: none;
+  border-radius: 999px;
+  background: #007aff;
+  color: white;
+  width: 42px;
+  height: 42px;
+  font-size: 18px;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 0;
+  color: #6e6e73;
+}
+
+.day {
+  min-height: 58px;
+  background: white;
+  border-radius: 14px;
+  padding: 7px 4px;
+  text-align: center;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.day:active {
+  transform: scale(0.96);
+}
+
+.day-number {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.today {
+  background: #007aff;
+  color: white;
+}
+
+.has-event {
+  border-color: #007aff;
+}
+
+.event-dot {
+  width: 6px;
+  height: 6px;
+  background: #007aff;
+  border-radius: 50%;
+  margin: 6px auto 0;
+}
+
+.today .event-dot {
+  background: white;
+}
+
+.event-count {
+  font-size: 11px;
+  margin-top: 3px;
+  color: #007aff;
+}
+
+.today .event-count {
+  color: white;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  justify-content: center;
+  align-items: flex-end;
+  padding: 14px;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 24px 24px 18px 18px;
+  padding: 18px;
+  animation: slideUp 0.18s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.modal-close {
+  border: none;
+  background: #e5e5ea;
+  color: #1c1c1e;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.event-list {
+  margin: 18px 0;
+}
+
+.empty-message {
+  color: #8e8e93;
+  background: #f2f2f7;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+}
+
+.event-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.event-main {
+  min-width: 0;
+}
+
+.event-time {
+  font-size: 14px;
+  font-weight: 700;
+  color: #007aff;
+  margin-bottom: 3px;
+}
+
+.event-title {
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.delete-btn {
+  flex-shrink: 0;
+  border: none;
+  background: #ff3b30;
+  color: white;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.form {
+  background: #f2f2f7;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6e6e73;
+  margin: 8px 0 6px;
+}
+
+input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #d1d1d6;
+  border-radius: 12px;
+  font-size: 16px;
+  background: white;
+}
+
+.add-btn {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  background: #007aff;
+  color: white;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 14px;
+}
+
+@media (max-width: 430px) {
+  .app {
+    padding: 14px 10px 24px;
+  }
+
+  .header h1 {
+    font-size: 21px;
+  }
+
+  .calendar {
+    gap: 5px;
+  }
+
+  .day {
+    min-height: 52px;
+    border-radius: 12px;
+  }
+
+  .day-number {
+    font-size: 15px;
+  }
+
+  .modal {
+    padding: 8px;
+  }
+
+  .modal-content {
+    border-radius: 22px 22px 14px 14px;
+  }
+}
