@@ -5,28 +5,48 @@ const selectedDateTitle = document.getElementById("selectedDateTitle");
 const eventList = document.getElementById("eventList");
 const eventInput = document.getElementById("eventInput");
 const eventTime = document.getElementById("eventTime");
+const addEventBtn = document.getElementById("addEventBtn");
+const cancelEditBtn = document.getElementById("cancelEditBtn");
 
 let currentDate = new Date();
 let selectedDate = "";
+let editingEventId = null;
+
+function createId() {
+  if (window.crypto && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return Date.now().toString() + Math.random().toString(16).slice(2);
+}
 
 function getEvents() {
   const saved = localStorage.getItem("calendarEvents");
   const events = JSON.parse(saved || "{}");
 
-  // 古い形式のデータが残っていても動くように変換
   Object.keys(events).forEach((dateKey) => {
     events[dateKey] = events[dateKey].map((event) => {
       if (typeof event === "string") {
         return {
-          id: crypto.randomUUID(),
+          id: createId(),
           title: event,
           time: ""
         };
       }
 
+      if (!event.id) {
+        event.id = createId();
+      }
+
+      if (!event.time) {
+        event.time = "";
+      }
+
       return event;
     });
   });
+
+  saveEvents(events);
 
   return events;
 }
@@ -115,8 +135,8 @@ function openModal(dateKey) {
   selectedDate = dateKey;
   selectedDateTitle.textContent = formatDateJapanese(dateKey);
   modal.style.display = "flex";
-  eventInput.value = "";
-  eventTime.value = "";
+
+  resetForm();
   renderEventList();
 
   setTimeout(() => {
@@ -126,6 +146,7 @@ function openModal(dateKey) {
 
 function closeModal() {
   modal.style.display = "none";
+  resetForm();
 }
 
 function renderEventList() {
@@ -155,10 +176,20 @@ function renderEventList() {
         <div class="event-time">${event.time || "時間なし"}</div>
         <div class="event-title">${escapeHTML(event.title)}</div>
       </div>
-      <button class="delete-btn" data-id="${event.id}">削除</button>
+
+      <div class="event-actions">
+        <button class="edit-btn" data-id="${event.id}">編集</button>
+        <button class="delete-btn" data-id="${event.id}">削除</button>
+      </div>
     `;
 
     eventList.appendChild(div);
+  });
+
+  document.querySelectorAll(".edit-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      startEditEvent(button.dataset.id);
+    });
   });
 
   document.querySelectorAll(".delete-btn").forEach((button) => {
@@ -168,7 +199,7 @@ function renderEventList() {
   });
 }
 
-function addEvent() {
+function addOrUpdateEvent() {
   const title = eventInput.value.trim();
   const time = eventTime.value;
 
@@ -183,19 +214,58 @@ function addEvent() {
     events[selectedDate] = [];
   }
 
-  events[selectedDate].push({
-    id: crypto.randomUUID(),
-    title: title,
-    time: time
-  });
+  if (editingEventId) {
+    events[selectedDate] = events[selectedDate].map((event) => {
+      if (event.id === editingEventId) {
+        return {
+          ...event,
+          title: title,
+          time: time
+        };
+      }
+
+      return event;
+    });
+  } else {
+    events[selectedDate].push({
+      id: createId(),
+      title: title,
+      time: time
+    });
+  }
 
   saveEvents(events);
 
-  eventInput.value = "";
-  eventTime.value = "";
-
+  resetForm();
   renderEventList();
   renderCalendar();
+}
+
+function startEditEvent(eventId) {
+  const events = getEvents();
+  const dayEvents = events[selectedDate] || [];
+  const targetEvent = dayEvents.find((event) => event.id === eventId);
+
+  if (!targetEvent) {
+    return;
+  }
+
+  editingEventId = eventId;
+  eventInput.value = targetEvent.title;
+  eventTime.value = targetEvent.time || "";
+
+  addEventBtn.textContent = "変更を保存";
+  cancelEditBtn.style.display = "block";
+
+  eventInput.focus();
+}
+
+function resetForm() {
+  editingEventId = null;
+  eventInput.value = "";
+  eventTime.value = "";
+  addEventBtn.textContent = "予定を追加";
+  cancelEditBtn.style.display = "none";
 }
 
 function deleteEvent(eventId) {
@@ -217,6 +287,7 @@ function deleteEvent(eventId) {
 
   saveEvents(events);
 
+  resetForm();
   renderEventList();
   renderCalendar();
 }
@@ -240,12 +311,17 @@ document.getElementById("nextBtn").addEventListener("click", () => {
   renderCalendar();
 });
 
-document.getElementById("addEventBtn").addEventListener("click", addEvent);
+addEventBtn.addEventListener("click", addOrUpdateEvent);
+
+cancelEditBtn.addEventListener("click", () => {
+  resetForm();
+});
+
 document.getElementById("closeBtn").addEventListener("click", closeModal);
 
 eventInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    addEvent();
+    addOrUpdateEvent();
   }
 });
 
