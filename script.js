@@ -9,8 +9,6 @@ const eventTime = document.getElementById("eventTime");
 const eventMemo = document.getElementById("eventMemo");
 const addEventBtn = document.getElementById("addEventBtn");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
-const backupBtn = document.getElementById("backupBtn");
-const importFile = document.getElementById("importFile");
 
 let currentDate = new Date();
 let selectedDate = "";
@@ -392,70 +390,6 @@ function goToday() {
   renderCalendar();
 }
 
-function backupData() {
-  const data = {
-    app: "Noir Calendar",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    events: getEvents()
-  };
-
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], {
-    type: "application/json"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  const today = new Date();
-  const fileName = `noir-calendar-backup-${today.getFullYear()}-${String(
-    today.getMonth() + 1
-  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.json`;
-
-  link.href = url;
-  link.download = fileName;
-  link.click();
-
-  URL.revokeObjectURL(url);
-}
-
-function importBackup(file) {
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-
-      if (!data.events || typeof data.events !== "object") {
-        alert("バックアップファイルの形式が違います");
-        return;
-      }
-
-      const result = confirm(
-        "現在の予定データを、バックアップの内容に置き換えますか？"
-      );
-
-      if (!result) {
-        return;
-      }
-
-      saveEvents(data.events);
-      renderCalendar();
-
-      if (selectedDate) {
-        renderEventList();
-      }
-
-      alert("バックアップを読み込みました");
-    } catch (error) {
-      alert("ファイルを読み込めませんでした");
-    }
-  };
-
-  reader.readAsText(file);
-}
-
 function escapeHTML(text) {
   return text
     .replaceAll("&", "&amp;")
@@ -489,18 +423,6 @@ eventInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     addOrUpdateEvent();
   }
-});
-
-backupBtn.addEventListener("click", backupData);
-
-importFile.addEventListener("change", (event) => {
-  const file = event.target.files[0];
-
-  if (file) {
-    importBackup(file);
-  }
-
-  event.target.value = "";
 });
 
 modal.addEventListener("click", (event) => {

@@ -47,7 +47,6 @@ button {
 .today-btn,
 .nav-btn,
 .add-btn,
-.tool-btn,
 .cancel-edit-btn,
 .edit-btn,
 .delete-btn,
@@ -58,7 +57,6 @@ button {
 .today-btn:active,
 .nav-btn:active,
 .add-btn:active,
-.tool-btn:active,
 .cancel-edit-btn:active,
 .edit-btn:active,
 .delete-btn:active,
@@ -78,8 +76,7 @@ button {
   backdrop-filter: blur(10px);
 }
 
-.month-card,
-.tool-card {
+.month-card {
   background: rgba(28, 28, 30, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 26px;
@@ -202,42 +199,6 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.tool-card {
-  margin-top: 16px;
-}
-
-.tool-card h2 {
-  margin: 0 0 12px;
-  font-size: 18px;
-}
-
-.tool-buttons {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.tool-btn {
-  border: none;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #f5f5f7;
-  padding: 13px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.import-label {
-  display: block;
-}
-
-.tool-note {
-  margin: 12px 0 0;
-  color: #8e8e93;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .modal {
@@ -452,8 +413,7 @@ textarea {
     font-size: 24px;
   }
 
-  .month-card,
-  .tool-card {
+  .month-card {
     border-radius: 22px;
     padding: 13px;
   }
