@@ -1,9 +1,17 @@
+const APP_NAME = "Noir Calendar";
+const DEFAULT_COLOR = "#0A84FF";
+
 const calendar = document.getElementById("calendar");
 const monthTitle = document.getElementById("monthTitle");
 const modal = document.getElementById("modal");
+const modalModeLabel = document.getElementById("modalModeLabel");
 const selectedDateTitle = document.getElementById("selectedDateTitle");
 const selectedHolidayName = document.getElementById("selectedHolidayName");
-const eventList = document.getElementById("eventList");
+const selectedDayTitle = document.getElementById("selectedDayTitle");
+const selectedDayHoliday = document.getElementById("selectedDayHoliday");
+const todayDateLabel = document.getElementById("todayDateLabel");
+const todayEventList = document.getElementById("todayEventList");
+const selectedDayEventList = document.getElementById("selectedDayEventList");
 const eventInput = document.getElementById("eventInput");
 const eventTime = document.getElementById("eventTime");
 const eventMemo = document.getElementById("eventMemo");
@@ -11,11 +19,15 @@ const addEventBtn = document.getElementById("addEventBtn");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
 
 let currentDate = new Date();
-let selectedDate = "";
+let selectedDate = getTodayKey();
 let editingEventId = null;
+let selectedColor = DEFAULT_COLOR;
 let holidayData = {};
 
 const HOLIDAY_API_URL = "https://holidays-jp.github.io/api/v1/date.json";
+
+document.title = APP_NAME;
+document.getElementById("appTitle").textContent = APP_NAME;
 
 function createId() {
   if (window.crypto && crypto.randomUUID) {
@@ -23,6 +35,11 @@ function createId() {
   }
 
   return Date.now().toString() + Math.random().toString(16).slice(2);
+}
+
+function getTodayKey() {
+  const today = new Date();
+  return makeDateKey(today.getFullYear(), today.getMonth(), today.getDate());
 }
 
 function getEvents() {
@@ -36,7 +53,8 @@ function getEvents() {
           id: createId(),
           title: event,
           time: "",
-          memo: ""
+          memo: "",
+          color: DEFAULT_COLOR
         };
       }
 
@@ -50,6 +68,10 @@ function getEvents() {
 
       if (!event.memo) {
         event.memo = "";
+      }
+
+      if (!event.color) {
+        event.color = DEFAULT_COLOR;
       }
 
       return event;
@@ -69,8 +91,12 @@ function makeDateKey(year, month, day) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+function dateKeyToDate(dateKey) {
+  return new Date(dateKey + "T00:00:00");
+}
+
 function formatDateJapanese(dateKey) {
-  const date = new Date(dateKey + "T00:00:00");
+  const date = dateKeyToDate(dateKey);
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
@@ -84,7 +110,7 @@ async function loadHolidays() {
 
   if (cached) {
     holidayData = JSON.parse(cached);
-    renderCalendar();
+    renderAll();
   }
 
   try {
@@ -95,18 +121,97 @@ async function loadHolidays() {
     }
 
     holidayData = await response.json();
-
     localStorage.setItem("holidayData", JSON.stringify(holidayData));
-
-    renderCalendar();
+    renderAll();
   } catch (error) {
     console.log(error);
 
     if (!cached) {
       holidayData = {};
-      renderCalendar();
+      renderAll();
     }
   }
+}
+
+function renderAll() {
+  renderTodayEvents();
+  renderCalendar();
+  renderSelectedDayEvents();
+}
+
+function renderTodayEvents() {
+  const todayKey = getTodayKey();
+
+  todayDateLabel.textContent = formatDateJapanese(todayKey);
+  renderEventList(todayEventList, todayKey, "今日の予定はありません");
+}
+
+function renderSelectedDayEvents() {
+  selectedDayTitle.textContent = formatDateJapanese(selectedDate);
+  selectedDayHoliday.textContent = holidayData[selectedDate] || "";
+
+  renderEventList(
+    selectedDayEventList,
+    selectedDate,
+    "この日の予定はありません"
+  );
+}
+
+function renderEventList(container, dateKey, emptyMessage) {
+  container.innerHTML = "";
+
+  const events = getEvents();
+  const dayEvents = [...(events[dateKey] || [])];
+
+  dayEvents.sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+
+  if (dayEvents.length === 0) {
+    container.innerHTML = `<p class="empty-message">${emptyMessage}</p>`;
+    return;
+  }
+
+  dayEvents.forEach((event) => {
+    const div = document.createElement("div");
+    div.className = "event-item";
+
+    div.innerHTML = `
+      <div class="event-color-line" style="background:${event.color || DEFAULT_COLOR}"></div>
+
+      <div class="event-main">
+        <div class="event-time">${event.time || "時間なし"}</div>
+        <div class="event-title">${escapeHTML(event.title)}</div>
+        ${
+          event.memo
+            ? `<div class="event-memo">${escapeHTML(event.memo)}</div>`
+            : ""
+        }
+      </div>
+
+      <div class="event-actions">
+        <button class="edit-btn" data-date="${dateKey}" data-id="${event.id}">編集</button>
+        <button class="delete-btn" data-date="${dateKey}" data-id="${event.id}">削除</button>
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll(".edit-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      startEditEvent(button.dataset.date, button.dataset.id);
+    });
+  });
+
+  container.querySelectorAll(".delete-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      deleteEvent(button.dataset.date, button.dataset.id);
+    });
+  });
 }
 
 function renderCalendar() {
@@ -137,7 +242,7 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const lastDate = new Date(year, month + 1, 0).getDate();
   const events = getEvents();
-  const today = new Date();
+  const todayKey = getTodayKey();
 
   for (let i = 0; i < firstDay; i++) {
     calendar.appendChild(document.createElement("div"));
@@ -164,18 +269,17 @@ function renderCalendar() {
       div.classList.add("holiday");
     }
 
+    if (dateKey === todayKey) {
+      div.classList.add("today");
+    }
+
+    if (dateKey === selectedDate) {
+      div.classList.add("selected");
+    }
+
     div.innerHTML = `
       <div class="day-number">${day}</div>
     `;
-
-    const isToday =
-      year === today.getFullYear() &&
-      month === today.getMonth() &&
-      day === today.getDate();
-
-    if (isToday) {
-      div.classList.add("today");
-    }
 
     if (holidayName) {
       const holiday = document.createElement("div");
@@ -187,9 +291,17 @@ function renderCalendar() {
     if (dayEvents.length > 0) {
       div.classList.add("has-event");
 
-      const dot = document.createElement("div");
-      dot.className = "event-dot";
-      div.appendChild(dot);
+      const dots = document.createElement("div");
+      dots.className = "calendar-dots";
+
+      dayEvents.slice(0, 3).forEach((event) => {
+        const dot = document.createElement("div");
+        dot.className = "event-dot";
+        dot.style.background = event.color || DEFAULT_COLOR;
+        dots.appendChild(dot);
+      });
+
+      div.appendChild(dots);
 
       const count = document.createElement("div");
       count.className = "event-count";
@@ -198,29 +310,28 @@ function renderCalendar() {
     }
 
     div.addEventListener("click", () => {
-      openModal(dateKey);
+      selectDate(dateKey);
     });
 
     calendar.appendChild(div);
   }
 }
 
-function openModal(dateKey) {
+function selectDate(dateKey) {
   selectedDate = dateKey;
-  selectedDateTitle.textContent = formatDateJapanese(dateKey);
+  renderCalendar();
+  renderSelectedDayEvents();
+}
 
-  const holidayName = holidayData[dateKey] || "";
+function openAddModal(dateKey) {
+  selectedDate = dateKey;
+  resetForm();
 
-  if (holidayName) {
-    selectedHolidayName.textContent = holidayName;
-  } else {
-    selectedHolidayName.textContent = "";
-  }
+  modalModeLabel.textContent = "NEW EVENT";
+  selectedDateTitle.textContent = formatDateJapanese(selectedDate);
+  selectedHolidayName.textContent = holidayData[selectedDate] || "";
 
   modal.style.display = "flex";
-
-  resetForm();
-  renderEventList();
 
   setTimeout(() => {
     eventInput.focus();
@@ -230,61 +341,6 @@ function openModal(dateKey) {
 function closeModal() {
   modal.style.display = "none";
   resetForm();
-}
-
-function renderEventList() {
-  eventList.innerHTML = "";
-
-  const events = getEvents();
-  const dayEvents = events[selectedDate] || [];
-
-  dayEvents.sort((a, b) => {
-    if (!a.time && !b.time) return 0;
-    if (!a.time) return 1;
-    if (!b.time) return -1;
-    return a.time.localeCompare(b.time);
-  });
-
-  if (dayEvents.length === 0) {
-    eventList.innerHTML = `<p class="empty-message">予定はありません</p>`;
-    return;
-  }
-
-  dayEvents.forEach((event) => {
-    const div = document.createElement("div");
-    div.className = "event-item";
-
-    div.innerHTML = `
-      <div class="event-main">
-        <div class="event-time">${event.time || "時間なし"}</div>
-        <div class="event-title">${escapeHTML(event.title)}</div>
-        ${
-          event.memo
-            ? `<div class="event-memo">${escapeHTML(event.memo)}</div>`
-            : ""
-        }
-      </div>
-
-      <div class="event-actions">
-        <button class="edit-btn" data-id="${event.id}">編集</button>
-        <button class="delete-btn" data-id="${event.id}">削除</button>
-      </div>
-    `;
-
-    eventList.appendChild(div);
-  });
-
-  document.querySelectorAll(".edit-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      startEditEvent(button.dataset.id);
-    });
-  });
-
-  document.querySelectorAll(".delete-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      deleteEvent(button.dataset.id);
-    });
-  });
 }
 
 function addOrUpdateEvent() {
@@ -310,7 +366,8 @@ function addOrUpdateEvent() {
           ...event,
           title: title,
           time: time,
-          memo: memo
+          memo: memo,
+          color: selectedColor
         };
       }
 
@@ -321,18 +378,23 @@ function addOrUpdateEvent() {
       id: createId(),
       title: title,
       time: time,
-      memo: memo
+      memo: memo,
+      color: selectedColor
     });
   }
 
   saveEvents(events);
 
-  resetForm();
-  renderEventList();
-  renderCalendar();
+  closeModal();
+  renderAll();
 }
 
-function startEditEvent(eventId) {
+function startEditEvent(dateKey, eventId) {
+  selectedDate = dateKey;
+
+  const date = dateKeyToDate(dateKey);
+  currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+
   const events = getEvents();
   const dayEvents = events[selectedDate] || [];
   const targetEvent = dayEvents.find((event) => event.id === eventId);
@@ -345,11 +407,23 @@ function startEditEvent(eventId) {
   eventInput.value = targetEvent.title;
   eventTime.value = targetEvent.time || "";
   eventMemo.value = targetEvent.memo || "";
+  selectedColor = targetEvent.color || DEFAULT_COLOR;
+  updateColorSelection();
+
+  modalModeLabel.textContent = "EDIT EVENT";
+  selectedDateTitle.textContent = formatDateJapanese(selectedDate);
+  selectedHolidayName.textContent = holidayData[selectedDate] || "";
 
   addEventBtn.textContent = "変更を保存";
   cancelEditBtn.style.display = "block";
 
-  eventInput.focus();
+  modal.style.display = "flex";
+
+  renderAll();
+
+  setTimeout(() => {
+    eventInput.focus();
+  }, 100);
 }
 
 function resetForm() {
@@ -357,11 +431,13 @@ function resetForm() {
   eventInput.value = "";
   eventTime.value = "";
   eventMemo.value = "";
+  selectedColor = DEFAULT_COLOR;
+  updateColorSelection();
   addEventBtn.textContent = "予定を追加";
   cancelEditBtn.style.display = "none";
 }
 
-function deleteEvent(eventId) {
+function deleteEvent(dateKey, eventId) {
   const result = confirm("この予定を削除しますか？");
 
   if (!result) {
@@ -370,24 +446,37 @@ function deleteEvent(eventId) {
 
   const events = getEvents();
 
-  events[selectedDate] = (events[selectedDate] || []).filter((event) => {
+  events[dateKey] = (events[dateKey] || []).filter((event) => {
     return event.id !== eventId;
   });
 
-  if (events[selectedDate].length === 0) {
-    delete events[selectedDate];
+  if (events[dateKey].length === 0) {
+    delete events[dateKey];
   }
 
   saveEvents(events);
 
-  resetForm();
-  renderEventList();
-  renderCalendar();
+  if (editingEventId === eventId) {
+    resetForm();
+  }
+
+  renderAll();
 }
 
 function goToday() {
   currentDate = new Date();
-  renderCalendar();
+  selectedDate = getTodayKey();
+  renderAll();
+}
+
+function updateColorSelection() {
+  document.querySelectorAll(".color-choice").forEach((button) => {
+    if (button.dataset.color === selectedColor) {
+      button.classList.add("selected");
+    } else {
+      button.classList.remove("selected");
+    }
+  });
 }
 
 function escapeHTML(text) {
@@ -411,6 +500,10 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 
 document.getElementById("todayBtn").addEventListener("click", goToday);
 
+document.getElementById("openAddModalBtn").addEventListener("click", () => {
+  openAddModal(selectedDate);
+});
+
 addEventBtn.addEventListener("click", addOrUpdateEvent);
 
 cancelEditBtn.addEventListener("click", () => {
@@ -425,11 +518,18 @@ eventInput.addEventListener("keydown", (event) => {
   }
 });
 
+document.querySelectorAll(".color-choice").forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedColor = button.dataset.color;
+    updateColorSelection();
+  });
+});
+
 modal.addEventListener("click", (event) => {
   if (event.target === modal) {
     closeModal();
   }
 });
 
-renderCalendar();
+renderAll();
 loadHolidays();

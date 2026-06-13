@@ -30,7 +30,7 @@ body {
   font-size: 11px;
   letter-spacing: 1.8px;
   color: #8e8e93;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .app-header h1 {
@@ -50,7 +50,9 @@ button {
 .cancel-edit-btn,
 .edit-btn,
 .delete-btn,
-.modal-close {
+.modal-close,
+.small-add-btn,
+.color-choice {
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
@@ -61,6 +63,8 @@ button {
 .edit-btn:active,
 .delete-btn:active,
 .modal-close:active,
+.small-add-btn:active,
+.color-choice:active,
 .day:active {
   transform: scale(0.96);
 }
@@ -72,11 +76,13 @@ button {
   color: #f5f5f7;
   padding: 11px 15px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   backdrop-filter: blur(10px);
 }
 
-.month-card {
+.today-card,
+.month-card,
+.selected-card {
   background: rgba(28, 28, 30, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 26px;
@@ -85,16 +91,53 @@ button {
   backdrop-filter: blur(16px);
 }
 
+.today-card {
+  margin-bottom: 16px;
+}
+
+.selected-card {
+  margin-top: 16px;
+}
+
+.section-header,
+.selected-header,
 .month-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  gap: 12px;
 }
 
+.section-header h2,
+.selected-header h2,
 .month-header h2 {
   margin: 0;
   font-size: 22px;
+}
+
+.date-chip {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 8px 11px;
+  color: #64d2ff;
+  background: rgba(100, 210, 255, 0.12);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.small-add-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #007aff, #5e5ce6);
+  color: white;
+  padding: 10px 13px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.month-header {
+  margin-bottom: 14px;
 }
 
 .nav-btn {
@@ -116,7 +159,7 @@ button {
 
 .weekday {
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
   padding: 8px 0;
   color: #8e8e93;
@@ -131,7 +174,7 @@ button {
 }
 
 .day {
-  min-height: 64px;
+  min-height: 66px;
   background: rgba(255, 255, 255, 0.07);
   border-radius: 16px;
   padding: 7px 4px;
@@ -143,7 +186,7 @@ button {
 
 .day-number {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .day.sunday .day-number,
@@ -153,6 +196,11 @@ button {
 
 .day.saturday .day-number {
   color: #64d2ff;
+}
+
+.day.selected {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
 .today {
@@ -167,23 +215,24 @@ button {
 }
 
 .has-event {
-  border-color: rgba(0, 122, 255, 0.9);
+  border-color: rgba(0, 122, 255, 0.8);
+}
+
+.calendar-dots {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 6px;
 }
 
 .event-dot {
   width: 6px;
   height: 6px;
-  background: #0a84ff;
   border-radius: 50%;
-  margin: 6px auto 0;
-}
-
-.today .event-dot {
-  background: white;
 }
 
 .event-count {
-  font-size: 11px;
+  font-size: 10px;
   margin-top: 3px;
   color: #64d2ff;
 }
@@ -199,6 +248,100 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.holiday-name {
+  min-height: 18px;
+  margin: 5px 0 0;
+  color: #ff9f0a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.event-list {
+  margin-top: 14px;
+}
+
+.event-list.compact {
+  margin-top: 12px;
+}
+
+.empty-message {
+  color: #8e8e93;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 15px;
+  text-align: center;
+}
+
+.event-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.event-item:last-child {
+  border-bottom: none;
+}
+
+.event-color-line {
+  width: 5px;
+  min-height: 48px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.event-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.event-time {
+  font-size: 14px;
+  font-weight: 900;
+  color: #64d2ff;
+  margin-bottom: 4px;
+}
+
+.event-title {
+  font-size: 17px;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.event-memo {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #b7b7bd;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.event-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.edit-btn,
+.delete-btn {
+  border: none;
+  color: white;
+  border-radius: 11px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.edit-btn {
+  background: #30d158;
+}
+
+.delete-btn {
+  background: #ff453a;
 }
 
 .modal {
@@ -243,19 +386,12 @@ button {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+  margin-bottom: 14px;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 22px;
-}
-
-.holiday-name {
-  min-height: 18px;
-  margin: 5px 0 0;
-  color: #ff9f0a;
-  font-size: 14px;
-  font-weight: 700;
 }
 
 .modal-close {
@@ -269,78 +405,6 @@ button {
   line-height: 1;
 }
 
-.event-list {
-  margin: 18px 0;
-}
-
-.empty-message {
-  color: #8e8e93;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 15px;
-  text-align: center;
-}
-
-.event-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 13px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.event-main {
-  min-width: 0;
-  flex: 1;
-}
-
-.event-time {
-  font-size: 14px;
-  font-weight: 800;
-  color: #64d2ff;
-  margin-bottom: 4px;
-}
-
-.event-title {
-  font-size: 17px;
-  font-weight: 700;
-  word-break: break-word;
-}
-
-.event-memo {
-  margin-top: 5px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: #b7b7bd;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.event-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.edit-btn,
-.delete-btn {
-  border: none;
-  color: white;
-  border-radius: 11px;
-  padding: 8px 10px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.edit-btn {
-  background: #30d158;
-}
-
-.delete-btn {
-  background: #ff453a;
-}
-
 .form {
   background: rgba(255, 255, 255, 0.07);
   border-radius: 20px;
@@ -350,7 +414,7 @@ button {
 label {
   display: block;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
   color: #a1a1a6;
   margin: 9px 0 6px;
 }
@@ -378,6 +442,25 @@ textarea {
   resize: vertical;
 }
 
+.color-options {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+
+.color-choice {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background: var(--color);
+}
+
+.color-choice.selected {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.16);
+}
+
 .add-btn {
   width: 100%;
   border: none;
@@ -386,7 +469,7 @@ textarea {
   color: white;
   padding: 15px;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 900;
   margin-top: 14px;
   box-shadow: 0 12px 28px rgba(0, 122, 255, 0.28);
 }
@@ -400,7 +483,7 @@ textarea {
   color: white;
   padding: 13px;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 900;
   margin-top: 10px;
 }
 
@@ -413,11 +496,15 @@ textarea {
     font-size: 24px;
   }
 
-  .month-card {
+  .today-card,
+  .month-card,
+  .selected-card {
     border-radius: 22px;
     padding: 13px;
   }
 
+  .section-header h2,
+  .selected-header h2,
   .month-header h2 {
     font-size: 20px;
   }

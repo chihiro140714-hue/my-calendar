@@ -21,11 +21,23 @@
     <header class="app-header">
       <div>
         <p class="label">PRIVATE CALENDAR</p>
-        <h1>Noir Calendar</h1>
+        <h1 id="appTitle">Noir Calendar</h1>
       </div>
 
       <button id="todayBtn" class="today-btn">今日</button>
     </header>
+
+    <section class="today-card">
+      <div class="section-header">
+        <div>
+          <p class="label">TODAY</p>
+          <h2>今日の予定</h2>
+        </div>
+        <span id="todayDateLabel" class="date-chip"></span>
+      </div>
+
+      <div id="todayEventList" class="event-list compact"></div>
+    </section>
 
     <section class="month-card">
       <div class="month-header">
@@ -36,20 +48,33 @@
 
       <section class="calendar" id="calendar"></section>
     </section>
+
+    <section class="selected-card">
+      <div class="selected-header">
+        <div>
+          <p class="label">SELECTED DAY</p>
+          <h2 id="selectedDayTitle"></h2>
+          <p id="selectedDayHoliday" class="holiday-name"></p>
+        </div>
+
+        <button id="openAddModalBtn" class="small-add-btn">＋ 予定</button>
+      </div>
+
+      <div id="selectedDayEventList" class="event-list"></div>
+    </section>
   </main>
 
   <div class="modal" id="modal">
     <div class="modal-content">
       <div class="modal-header">
         <div>
+          <p class="label" id="modalModeLabel">NEW EVENT</p>
           <h2 id="selectedDateTitle"></h2>
           <p id="selectedHolidayName" class="holiday-name"></p>
         </div>
 
         <button id="closeBtn" class="modal-close">×</button>
       </div>
-
-      <div id="eventList" class="event-list"></div>
 
       <div class="form">
         <label for="eventTime">時間</label>
@@ -60,6 +85,15 @@
 
         <label for="eventMemo">メモ</label>
         <textarea id="eventMemo" placeholder="持ち物・場所・補足など"></textarea>
+
+        <label>色</label>
+        <div class="color-options" id="colorOptions">
+          <button type="button" class="color-choice selected" data-color="#0A84FF" style="--color:#0A84FF" aria-label="青"></button>
+          <button type="button" class="color-choice" data-color="#30D158" style="--color:#30D158" aria-label="緑"></button>
+          <button type="button" class="color-choice" data-color="#FF9F0A" style="--color:#FF9F0A" aria-label="オレンジ"></button>
+          <button type="button" class="color-choice" data-color="#FF453A" style="--color:#FF453A" aria-label="赤"></button>
+          <button type="button" class="color-choice" data-color="#BF5AF2" style="--color:#BF5AF2" aria-label="紫"></button>
+        </div>
 
         <button id="addEventBtn" class="add-btn">予定を追加</button>
         <button id="cancelEditBtn" class="cancel-edit-btn">編集をキャンセル</button>
