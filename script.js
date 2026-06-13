@@ -2,15 +2,22 @@ const calendar = document.getElementById("calendar");
 const monthTitle = document.getElementById("monthTitle");
 const modal = document.getElementById("modal");
 const selectedDateTitle = document.getElementById("selectedDateTitle");
+const selectedHolidayName = document.getElementById("selectedHolidayName");
 const eventList = document.getElementById("eventList");
 const eventInput = document.getElementById("eventInput");
 const eventTime = document.getElementById("eventTime");
+const eventMemo = document.getElementById("eventMemo");
 const addEventBtn = document.getElementById("addEventBtn");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
+const backupBtn = document.getElementById("backupBtn");
+const importFile = document.getElementById("importFile");
 
 let currentDate = new Date();
 let selectedDate = "";
 let editingEventId = null;
+let holidayData = {};
+
+const HOLIDAY_API_URL = "https://holidays-jp.github.io/api/v1/date.json";
 
 function createId() {
   if (window.crypto && crypto.randomUUID) {
@@ -30,7 +37,8 @@ function getEvents() {
         return {
           id: createId(),
           title: event,
-          time: ""
+          time: "",
+          memo: ""
         };
       }
 
@@ -40,6 +48,10 @@ function getEvents() {
 
       if (!event.time) {
         event.time = "";
+      }
+
+      if (!event.memo) {
+        event.memo = "";
       }
 
       return event;
@@ -60,8 +72,43 @@ function makeDateKey(year, month, day) {
 }
 
 function formatDateJapanese(dateKey) {
-  const [year, month, day] = dateKey.split("-");
-  return `${Number(month)}月${Number(day)}日`;
+  const date = new Date(dateKey + "T00:00:00");
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const weekday = weekdays[date.getDay()];
+
+  return `${month}月${day}日（${weekday}）`;
+}
+
+async function loadHolidays() {
+  const cached = localStorage.getItem("holidayData");
+
+  if (cached) {
+    holidayData = JSON.parse(cached);
+    renderCalendar();
+  }
+
+  try {
+    const response = await fetch(HOLIDAY_API_URL);
+
+    if (!response.ok) {
+      throw new Error("祝日データを取得できませんでした");
+    }
+
+    holidayData = await response.json();
+
+    localStorage.setItem("holidayData", JSON.stringify(holidayData));
+
+    renderCalendar();
+  } catch (error) {
+    console.log(error);
+
+    if (!cached) {
+      holidayData = {};
+      renderCalendar();
+    }
+  }
 }
 
 function renderCalendar() {
@@ -72,12 +119,20 @@ function renderCalendar() {
 
   monthTitle.textContent = `${year}年${month + 1}月`;
 
-  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const weekdays = [
+    { label: "日", className: "sunday" },
+    { label: "月", className: "" },
+    { label: "火", className: "" },
+    { label: "水", className: "" },
+    { label: "木", className: "" },
+    { label: "金", className: "" },
+    { label: "土", className: "saturday" }
+  ];
 
   weekdays.forEach((weekday) => {
     const div = document.createElement("div");
-    div.className = "weekday";
-    div.textContent = weekday;
+    div.className = `weekday ${weekday.className}`;
+    div.textContent = weekday.label;
     calendar.appendChild(div);
   });
 
@@ -93,9 +148,23 @@ function renderCalendar() {
   for (let day = 1; day <= lastDate; day++) {
     const dateKey = makeDateKey(year, month, day);
     const dayEvents = events[dateKey] || [];
+    const holidayName = holidayData[dateKey] || "";
+    const dayOfWeek = new Date(year, month, day).getDay();
 
     const div = document.createElement("div");
     div.className = "day";
+
+    if (dayOfWeek === 0) {
+      div.classList.add("sunday");
+    }
+
+    if (dayOfWeek === 6) {
+      div.classList.add("saturday");
+    }
+
+    if (holidayName) {
+      div.classList.add("holiday");
+    }
 
     div.innerHTML = `
       <div class="day-number">${day}</div>
@@ -108,6 +177,13 @@ function renderCalendar() {
 
     if (isToday) {
       div.classList.add("today");
+    }
+
+    if (holidayName) {
+      const holiday = document.createElement("div");
+      holiday.className = "holiday-small";
+      holiday.textContent = holidayName;
+      div.appendChild(holiday);
     }
 
     if (dayEvents.length > 0) {
@@ -134,6 +210,15 @@ function renderCalendar() {
 function openModal(dateKey) {
   selectedDate = dateKey;
   selectedDateTitle.textContent = formatDateJapanese(dateKey);
+
+  const holidayName = holidayData[dateKey] || "";
+
+  if (holidayName) {
+    selectedHolidayName.textContent = holidayName;
+  } else {
+    selectedHolidayName.textContent = "";
+  }
+
   modal.style.display = "flex";
 
   resetForm();
@@ -175,6 +260,11 @@ function renderEventList() {
       <div class="event-main">
         <div class="event-time">${event.time || "時間なし"}</div>
         <div class="event-title">${escapeHTML(event.title)}</div>
+        ${
+          event.memo
+            ? `<div class="event-memo">${escapeHTML(event.memo)}</div>`
+            : ""
+        }
       </div>
 
       <div class="event-actions">
@@ -202,6 +292,7 @@ function renderEventList() {
 function addOrUpdateEvent() {
   const title = eventInput.value.trim();
   const time = eventTime.value;
+  const memo = eventMemo.value.trim();
 
   if (title === "") {
     alert("予定を入力してください");
@@ -220,7 +311,8 @@ function addOrUpdateEvent() {
         return {
           ...event,
           title: title,
-          time: time
+          time: time,
+          memo: memo
         };
       }
 
@@ -230,7 +322,8 @@ function addOrUpdateEvent() {
     events[selectedDate].push({
       id: createId(),
       title: title,
-      time: time
+      time: time,
+      memo: memo
     });
   }
 
@@ -253,6 +346,7 @@ function startEditEvent(eventId) {
   editingEventId = eventId;
   eventInput.value = targetEvent.title;
   eventTime.value = targetEvent.time || "";
+  eventMemo.value = targetEvent.memo || "";
 
   addEventBtn.textContent = "変更を保存";
   cancelEditBtn.style.display = "block";
@@ -264,6 +358,7 @@ function resetForm() {
   editingEventId = null;
   eventInput.value = "";
   eventTime.value = "";
+  eventMemo.value = "";
   addEventBtn.textContent = "予定を追加";
   cancelEditBtn.style.display = "none";
 }
@@ -292,6 +387,75 @@ function deleteEvent(eventId) {
   renderCalendar();
 }
 
+function goToday() {
+  currentDate = new Date();
+  renderCalendar();
+}
+
+function backupData() {
+  const data = {
+    app: "Noir Calendar",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    events: getEvents()
+  };
+
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const today = new Date();
+  const fileName = `noir-calendar-backup-${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.json`;
+
+  link.href = url;
+  link.download = fileName;
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(file) {
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+
+      if (!data.events || typeof data.events !== "object") {
+        alert("バックアップファイルの形式が違います");
+        return;
+      }
+
+      const result = confirm(
+        "現在の予定データを、バックアップの内容に置き換えますか？"
+      );
+
+      if (!result) {
+        return;
+      }
+
+      saveEvents(data.events);
+      renderCalendar();
+
+      if (selectedDate) {
+        renderEventList();
+      }
+
+      alert("バックアップを読み込みました");
+    } catch (error) {
+      alert("ファイルを読み込めませんでした");
+    }
+  };
+
+  reader.readAsText(file);
+}
+
 function escapeHTML(text) {
   return text
     .replaceAll("&", "&amp;")
@@ -311,6 +475,8 @@ document.getElementById("nextBtn").addEventListener("click", () => {
   renderCalendar();
 });
 
+document.getElementById("todayBtn").addEventListener("click", goToday);
+
 addEventBtn.addEventListener("click", addOrUpdateEvent);
 
 cancelEditBtn.addEventListener("click", () => {
@@ -325,6 +491,18 @@ eventInput.addEventListener("keydown", (event) => {
   }
 });
 
+backupBtn.addEventListener("click", backupData);
+
+importFile.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+
+  if (file) {
+    importBackup(file);
+  }
+
+  event.target.value = "";
+});
+
 modal.addEventListener("click", (event) => {
   if (event.target === modal) {
     closeModal();
@@ -332,3 +510,4 @@ modal.addEventListener("click", (event) => {
 });
 
 renderCalendar();
+loadHolidays();

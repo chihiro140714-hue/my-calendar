@@ -3,26 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta name="theme-color" content="#05060a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="My Calendar" />
-  <title>My Calendar</title>
+  <meta name="apple-mobile-web-app-title" content="Noir Calendar" />
+
+  <title>Noir Calendar</title>
+
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
 </head>
+
 <body>
   <main class="app">
-    <header class="header">
-      <button id="prevBtn" class="nav-btn">＜</button>
-      <h1 id="monthTitle"></h1>
-      <button id="nextBtn" class="nav-btn">＞</button>
+    <header class="app-header">
+      <div>
+        <p class="label">PRIVATE CALENDAR</p>
+        <h1>Noir Calendar</h1>
+      </div>
+
+      <button id="todayBtn" class="today-btn">今日</button>
     </header>
 
-    <section class="calendar" id="calendar"></section>
+    <section class="month-card">
+      <div class="month-header">
+        <button id="prevBtn" class="nav-btn">＜</button>
+        <h2 id="monthTitle"></h2>
+        <button id="nextBtn" class="nav-btn">＞</button>
+      </div>
+
+      <section class="calendar" id="calendar"></section>
+    </section>
+
+    <section class="tool-card">
+      <h2>データ管理</h2>
+
+      <div class="tool-buttons">
+        <button id="backupBtn" class="tool-btn">バックアップ作成</button>
+
+        <label class="tool-btn import-label">
+          バックアップ読み込み
+          <input id="importFile" type="file" accept="application/json" hidden />
+        </label>
+      </div>
+
+      <p class="tool-note">
+        予定データはこのブラウザに保存されます。バックアップを作ると、別端末への移行にも使えます。
+      </p>
+    </section>
   </main>
 
   <div class="modal" id="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="selectedDateTitle"></h2>
+        <div>
+          <h2 id="selectedDateTitle"></h2>
+          <p id="selectedHolidayName" class="holiday-name"></p>
+        </div>
+
         <button id="closeBtn" class="modal-close">×</button>
       </div>
 
@@ -34,6 +74,9 @@
 
         <label for="eventInput">予定</label>
         <input id="eventInput" type="text" placeholder="例：病院、バイト、買い物" />
+
+        <label for="eventMemo">メモ</label>
+        <textarea id="eventMemo" placeholder="持ち物・場所・補足など"></textarea>
 
         <button id="addEventBtn" class="add-btn">予定を追加</button>
         <button id="cancelEditBtn" class="cancel-edit-btn">編集をキャンセル</button>
